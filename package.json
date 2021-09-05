@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node simple-server.js 6768"
+  }
+}

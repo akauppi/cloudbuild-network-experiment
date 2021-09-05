@@ -1,0 +1,19 @@
+#
+# docker-compose.yml
+#
+version: '3.0'
+
+services:
+  abc:
+    image: gcr.io/cloud-builders/npm
+    ports:
+      - "6768:6768"
+    command: sh -o pipefail -c
+      'echo "Opening port 6768" &&
+      ./simple-server.js 6768'
+    network_mode: cloudbuild
+
+networks:
+  default:
+    external:
+      name: cloudbuild

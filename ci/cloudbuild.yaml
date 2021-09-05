@@ -1,0 +1,24 @@
+#
+# ci/cloudbuild.yaml
+#
+# For running manually, to find out how services can be spawned (and used by later steps), in Cloud Build CI.
+#
+# References:
+#   - "Communicate between two containers in Google cloud build" (SO)
+#     -> https://stackoverflow.com/questions/52046609/communicate-between-two-containers-in-google-cloud-build/58991131#58991131
+#
+steps:
+  # Launch a service, with DC
+  #
+  - name: docker/compose:${_DOCKER_COMPOSE_TAG}
+    args: ['up', '-d']
+
+  # See if we hear it
+  #
+  - name: gcr.io/cloud-builders/curl
+    args: ['-v', 'abc:6768']
+
+timeout: 60s
+
+substitutions:
+  _DOCKER_COMPOSE_TAG: 1.29.2
