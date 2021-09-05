@@ -1,19 +1,33 @@
 #
 # docker-compose.yml
 #
-version: '3.0'
+version: '3.7'
 
 services:
   abc:
     image: gcr.io/cloud-builders/npm
     ports:
       - "6768:6768"
-    command: sh -o pipefail -c
-      'echo "Opening port 6768" &&
-      ./simple-server.js 6768'
-    network_mode: cloudbuild
+    volumes:
+      - .:/work
+    working_dir:
+      /work
+    entrypoint: node
+    command: ./simple-server.js 6768
+    #network_mode: cloudbuild
 
-networks:
-  default:
-    external:
-      name: cloudbuild
+  # Used in the DC alternative, in 'ci/cloudbuild.yaml'
+  curl:
+    image: gcr.io/cloud-builders/curl:latest
+    command: abc:6768
+    profiles: ['manual']
+
+# Turned out these are not needed (to see the service from DC or Docker); they did not help to see it from CloudBuild
+# native steps.
+#
+# Note:
+#   - Using new layout because: "network.external.name is deprecated in favor of network.name" (but it's the same also with that).
+#
+#networks:
+#  default:
+#    name: cloudbuild

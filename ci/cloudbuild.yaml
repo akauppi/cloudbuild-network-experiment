@@ -15,8 +15,19 @@ steps:
 
   # See if we hear it
   #
-  - name: gcr.io/cloud-builders/curl
-    args: ['-v', 'abc:6768']
+  # This doesn't.
+  #
+  #|- name: gcr.io/cloud-builders/curl
+  #|  args: ['-v', 'abc:6768']             # "could not resolve host: abc_0"
+  #|  #args: ['-v', 'step_0:6768']         # "could not resolve host: step_0"
+
+  # Listen from Docker Compose. Works
+  - name: docker/compose:${_DOCKER_COMPOSE_TAG}
+    args: ['run', 'curl']
+
+  # Listen from Docker. Works
+  - name: docker
+    args: ['run', '--rm', '--network', 'workspace_default', 'gcr.io/cloud-builders/curl', 'abc:6768']
 
 timeout: 60s
 

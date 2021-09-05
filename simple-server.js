@@ -10,7 +10,8 @@
 *     $ ./simple-server.js 1234
 *   <<
 */
-import { createServer } from 'http'
+//import { createServer } from 'http'
+const mod = require('http'); const { createServer } = mod;
 
 const [argv2] = process.argv.slice(2);
 

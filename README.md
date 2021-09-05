@@ -8,6 +8,13 @@ The goal:
 - ..and use them in following Cloud Build steps
 
 
+## TL;DR
+
+Solved this, for my use case (running Firebase Emulators within Cloud Build run, and then accessing them in later steps).
+
+The solution is based on wrapping whatever tools you want to use (e.g. `npm`) into a Docker (or Docker Compose) step. This is acceptable to the author.
+
+
 ## Found clues
 
 Cloud Build [documentation](https://cloud.google.com/build/docs/overview) states:
@@ -16,9 +23,7 @@ Cloud Build [documentation](https://cloud.google.com/build/docs/overview) states
 
 However, it does not give a sample on how this is done!
 
-The only source found by the author is:
-
-- [Communicate between two containers in Google cloud build](https://stackoverflow.com/questions/52046609/communicate-between-two-containers-in-google-cloud-build/58991131#58991131) (SO)
+The only source found by the author is: [Communicate between two containers in Google cloud build](https://stackoverflow.com/questions/52046609/communicate-between-two-containers-in-google-cloud-build/58991131#58991131) (SO)
 
 Does it work, in 2021???
 
@@ -35,24 +40,39 @@ $ gcloud builds submit --config=ci/cloudbuild.yaml
 
 ### Expected / wished for
 
-- Port 6768 would respond with 200
+- Port 6768 would respond with 200; the Cloud Build run will pass
 
 ### Actual
 
 ```
-Step #1: Already have image (with digest): gcr.io/cloud-builders/curl
-Step #1: * Rebuilt URL to: abc:6768/
-Step #1:   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-Step #1:                                  Dload  Upload   Total   Spent    Left  Speed
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Could not resolve host: abc
-Step #1: * Closing connection 0
-Step #1: curl: (6) Could not resolve host: abc
+Could not resolve host: abc
 ```
 
 
-## Work-around
+## Conclusion
 
-I can place also the tests into Docker Compose, and run them that way from Cloud Build. But this is non-ideal since it outsources CI-specific details to the `docker-compose.yml`.
+Studying the said SO entry 3-5 times, and trying different approaches the author concludes (Sep 2021):
 
-I would rather have the CI just launch the background services, then be able to run tests on the `npm` image - much like the real developer would work.
+1. Wasn't able to:
+
+  - get a "native" Cloud Build step, following Docker Compose `up -d`, to reach such service
+
+  In particular, the mention of `cloudbuild` network in the Cloud Build docs is confusing. There are no samples, on how it would be used.
+
+2. Was able to:
+
+   - listen to the server, from `cloudbuild.yaml`, if the step is wrapped like this:
+
+   ```
+     # Listen from Docker. Works
+  - name: docker
+    args: ['run', '--network', 'workspace_default', 'gcr.io/cloud-builders/curl', 'abc:6768']
+   ```
+   
+   Note that the name of the network is `workspace_default`, derived from the working directory of Cloud Build runs (`/workspace`).
+   
+
+This is enough.
+
+It's a bit clumsy, but means that *any* steps can be declared within the `cloudbuild.yaml`, without help from the Docker Compose file. This is one of the goals of the author, to keep CI definitions away from cluttering the developer's folder.
 
